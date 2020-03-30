@@ -1,0 +1,75 @@
+﻿@model ExampleWebApp.Models.serviceSettings
+
+@{
+
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Container App</title>
+</head>
+<body>
+
+    <h2>Container-based Web App</h2>
+    <hr />
+    <p>This web app is running in a container.  It is designed to test a container-based service.  Enter the relevant information for the service and test it out!</p>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <form asp-action="Index">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group row">
+                        <div class="col-md-3"><label asp-for="Address" class="control-label"></label></div>
+                        <div class="col-md-6">
+                            <input asp-for="Address" class="form-control" id="address" />
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3"><label asp-for="Port" class="control-label"></label></div>
+                        <div class="col-md-6">
+                            <input asp-for="Port" class="form-control" id="port" />
+                            <span asp-validation-for="Port" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3"><label asp-for="Command" class="control-label"></label></div>
+                        <div class="col-md-6">
+                            <div><input type="radio" oninput="return setCommand('1');" value="1" name="Command" id="ping" class="command" /> Ping</div>
+                            <div><input type="radio" oninput="return setCommand('2');" value="2" name="Command" class="command" /> Load</div>
+                            <span asp-validation-for="Command" class="text-danger"></span>
+                        </div>
+
+                    </div>
+                    <div class="form-group row" id="minutesDiv" hidden="hidden">
+                        <div class="col-md-3"><label asp-for="Minutes" class="control-label" id="minutes"></label></div>
+                        <div class="col-md-6">
+                            <input asp-for="Minutes" class="form-control" />
+                            <span asp-validation-for="Minutes" class="text-danger"></span>
+                        </div>
+                    </div>
+                </form>
+                <div class="form-group">
+                    <Button id="testAPI" class="btn btn-primary">Test API</Button>
+                </div>
+
+            </div>
+            <div class="col-md-4">
+                <h4>Results</h4>
+                <div class="text-success" id="results">
+                    @Html.Raw(ViewBag.Result)
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    @section Scripts {
+        @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+        <script src="~/js/site.js"></script>
+    }
+</body>
+</html>

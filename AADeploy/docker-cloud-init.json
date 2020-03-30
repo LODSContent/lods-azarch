@@ -1,0 +1,200 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "labInstanceId": {
+      "type": "string"
+    },
+    "labPassword": {
+      "type": "string"
+    },
+    "testType": {
+      "type": "int",
+      "defaultValue": 4
+    }
+
+  },
+  "variables": {
+    "vmName": "dockerHost",
+    "adminUserName": "student",
+    "adminPassword": "[concat('Azure!',parameters('labPassword'))]",
+    "VNetPrefix": "10.0.0.0/16",
+    "VNetSubnet1Name": "default",
+    "VNetSubnet1Prefix": "10.0.0.0/24",
+    "ImagePublisher": "Canonical",
+    "ImageOffer": "UbuntuServer",
+    "OSDiskName": "OSDisk",
+    "ubuntuOSVersion": "18.04-LTS",
+    "VmSize": "Standard_D2_v2",
+    "vnetName": "[concat(variables('vmName'),'-VNet')]",
+    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "SubnetRef": "[concat(variables('VnetID'), '/subnets/', variables('VNetSubnet1Name'))]",
+    "NicName": "[concat(variables('vmName'), '-NIC')]",
+    "PIPName": "[concat(variables('vmName'),'-PIP')]",
+    "storageName": "[concat('sa', parameters('labInstanceId'))]",
+    "storageType": "Standard_LRS",
+    "deployStorage": "[bool(not(equals(parameters('testType'),63)))]"
+  },
+  "resources": [
+
+    {
+      "name": "[variables('vnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "VNet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('VNetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('VNetSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('VNetSubnet1Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('NicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[variables('VnetID')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('PIPName'))]"
+      ],
+      "tags": {
+        "displayName": "Nic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('SubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('PIPName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('NicName'))]"
+      ],
+      "tags": {
+        "displayName": ""
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('VmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[variables('adminUserName')]",
+          "adminPassword": "[variables('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('ImagePublisher')]",
+            "offer": "[variables('ImageOffer')]",
+            "sku": "[variables('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "OSDisk",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('NicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "installdocker",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "tags": {
+            "displayName": "installdocker"
+          },
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "https://raw.githubusercontent.com/twallace27603/lods-azarch/master/AADeploy/installdocker.sh"
+              ],
+              "commandToExecute": "sh installdocker.sh"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('PIPName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "PIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat('dhpip',parameters('labInstanceId'))]"
+        }
+      }
+    },
+    {
+      "name": "[variables('storageName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-01-01",
+      "condition": "[variables('deployStorage')]",
+      "sku": {
+        "name": "[variables('storageType')]"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "Storage Account"
+      },
+      "kind": "Storage"
+    }
+  ],
+  "outputs": {
+    "Password": {
+      "type": "string",
+      "value": "[variables('adminPassword')]"
+    }
+  }
+}

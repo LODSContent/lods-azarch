@@ -13,11 +13,11 @@
     "blobTrackingSchemaStorageUri": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "https://tswlodschallenges.blob.core.windows.net/artifacts/ArchitectureDB.bacpac"
+      "defaultValue": "https://github.com/LODSContent/lods-azarch/blob/master/artifacts/ArchitectureDB.bacpac?raw=true"
     },
     "webAppDeployUri": {
       "type": "string",
-      "defaultValue": "https://github.com/twallace27603/lods-azarch/blob/master/aachallenges/deploy/aachallenges.zip?raw=true"
+      "defaultValue": "https://github.com/LODSContent/lods-azarch/blob/master/aachallenges/deploy/aachallenges.zip?raw=true"
     },
     "testType": {
       "type": "int",
